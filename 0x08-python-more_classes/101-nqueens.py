@@ -1,89 +1,69 @@
 #!/usr/bin/python3
-""" defines a Rectangle class"""
 
 
-class Rectangle:
-    """Rectangle Class"""
-    number_of_instances = 0
-    print_symbol = '#'
+import sys
 
-    def __init__(self, width=0, height=0):
-        """ Init Method """
-        self.width = width
-        self.height = height
-        Rectangle.number_of_instances += 1
 
-    @property
-    def width(self):
-        """getter def"""
-        return self.__width
+def printBoard(board):
+    if any(1 in x for x in board):
+        print([[idx, board[idx].index(1)] for idx, val in enumerate(board)])
 
-    @width.setter
-    def width(self, value):
-        """setter def"""
-        if type(value) is not int:
-            raise TypeError('width must be an integer')
-        if value < 0:
-            raise ValueError('width must be >= 0')
-        self.__width = value
 
-    @property
-    def height(self):
-        """getter def"""
-        return self.__height
+def isSafe(row, square, chessboard, N, diag):
+    if chessboard[row][square]:
+        return False
+    if square - diag >= 0 and chessboard[row][square - diag]:
+        return False
+    if square + diag < (N) and chessboard[row][square + diag]:
+        return False
+    if row == 0:
+        return True
+    return isSafe(row - 1, square, chessboard, N, diag + 1)
 
-    @height.setter
-    def height(self, value):
-        """setter def"""
-        if type(value) is not int:
-            raise TypeError('height must be an integer')
-        if value < 0:
-            raise ValueError('height must be >= 0')
-        self.__height = value
 
-    def area(self):
-        """define area def"""
-        return self.__width * self.__height
-
-    def perimeter(self):
-        """define perimeter def"""
-        if self.__width == 0 or self.__height == 0:
+def placeSquare(row, position, chessboard, N):
+    for square in range(position, N):
+        if 1 in chessboard[row]:
             return 0
-        return(self.__width * 2) + (self.__height * 2)
+        if not isSafe(row - 1, square, chessboard, N, 1):
+            continue
+        chessboard[row][square] = 1
+        return
+    return 1
 
-    def __str__(self):
-        """define informal print str"""
-        if self.__width == 0 or self.__height == 0:
-            return ""
+if len(sys.argv) != 2:
+    print("Usage: nqueens N")
+    sys.exit(1)
+
+N = sys.argv[1]
+
+if not str.isdigit(N):
+    print("N must be a number")
+    sys.exit(1)
+
+N = int(N)
+
+if N < 4:
+    print("N must be at least 4")
+    sys.exit(1)
+
+queen = 0
+
+while queen != N:
+    chessboard = [[0 for x in range(N)] for x in range(N)]
+    chessboard[0][queen] = 1
+    position = 0
+    row = 1
+    while row < N:
+        if placeSquare(row, position, chessboard, N):
+            row -= 1
+            position = chessboard[row].index(1)
+            chessboard[row][position] = 0
+            position += 1
+            if not row:
+                break
         else:
-            hsh = str(self.print_symbol)
-            return ((hsh*self.__width + "\n")*self.__height)[:-1]
-
-    def __repr__(self):
-        """define official print repr"""
-        return 'Rectangle({}, {})'.format(self.__width, self.__height)
-
-    def __del__(self):
-        """define delete method"""
-        Rectangle.number_of_instances -= 1
-        print('Bye rectangle...')
-
-    @staticmethod
-    def bigger_or_equal(rect_1, rect_2):
-        """
-            Biggest Rectangle (Rectangle)
-        """
-        if not isinstance(rect_1, Rectangle):
-            raise TypeError("rect_1 must be an instance of Rectangle")
-        if not isinstance(rect_2, Rectangle):
-            raise TypeError("rect_2 must be an instance of Rectangle")
-        Area1 = rect_1.area()
-        Area2 = rect_2.area()
-        if Area1 >= Area2:
-            return rect_1
-        return rect_2
-
-    @classmethod
-    def square(cls, size=0):
-        """ Returns a new Rectangle instance """
-        return (cls(size, size))
+            row += 1
+            position = 0
+    printBoard(chessboard)
+    queen += 1
